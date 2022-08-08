@@ -44,6 +44,7 @@ Follow these steps to add a new visualizer:
 - copy webgme-config `docker-compose cp webgme:/usr/app/config/config.webgme.js config/config.webgme.js`
 ### Adding new seed to your DS
 Follow these steps to add a new seed based on an existing project in your server:
+## Create your project, and only after that seed for it
 - enter the container
 - `npm run webgme new seed MyProjectName -- --seed-name MySeedName`
 - exit container

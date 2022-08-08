@@ -10,6 +10,7 @@ const mongoHost = process.env.MONGO_HOST || '127.0.0.1';
 config.mongo.uri = `mongodb://mongo:27017`;
 config.plugin.allowServerExecution = true;
 
+config.authentication.enable = false;
 
 validateConfig(config);
 module.exports = config;
