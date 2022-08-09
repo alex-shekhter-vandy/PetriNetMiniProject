@@ -177,35 +177,51 @@ define([
         rawMETA.forEach(node => {
             META[node.getAttribute('name')] = node.getId(); //we just need the id...
         });
+        self._logger.debug( "_initPetriNet::META " + JSON.stringify( META ) );
         //now we collect all data we need for network visualization
         //we need our states (names, position, type), need the set of next state (with event names)
-        const smNode = self._client.getNode(self._currentNodeId);
-        const elementIds = smNode.getChildrenIds();
-        const sm = {init: null, states:{}};
+        const pnNode = self._client.getNode(self._currentNodeId);
+        const elementIds = pnNode.getChildrenIds();
+        const pn = {init: null, places:{}, transitions: {}};
         elementIds.forEach(elementId => {
             const node = self._client.getNode(elementId);
             // the simple way of checking type
-            if (node.isTypeOf(META['Place'])) {
+            const isTransition = node.isTypeOf(META['Transition']);
+            const isPlace = node.isTypeOf(META['Place']);
+            if (isPlace || isTransition) {
+
                 //right now we only interested in states...
-                const state = {name: node.getAttribute('name'), next:{}, position: node.getRegistry('position'), isEnd: node.isTypeOf(META['End'])};
-                // one way to check meta-type in the client context - though it does not check for generalization types like State
-                if ('Init' === self._client.getNode(node.getMetaTypeId()).getAttribute('name')) {
-                    sm.init = elementId;
-                }
+                const elem = {
+                    name: node.getAttribute('name'), 
+                    next: [], 
+                    position: node.getRegistry('position'),
+                    tokens: node.getAttribute('tokens')
+                    // isEnd: node.isTypeOf(META['End'])
+                };
+                // // one way to check meta-type in the client context - though it does not check for generalization types like State
+                // if ('Init' === self._client.getNode(node.getMetaTypeId()).getAttribute('name')) {
+                //     pn.init = elementId;
+                // }
 
                 // this is in no way optimal, but shows clearly what we are looking for when we collect the data
                 elementIds.forEach(nextId => {
                     const nextNode = self._client.getNode(nextId);
-                    if(nextNode.isTypeOf(META['Transition']) && nextNode.getPointerId('src') === elementId) {
-                        state.next[nextNode.getAttribute('event')] = nextNode.getPointerId('dst');
+                    const isArc = nextNode.isTypeOf(META['InplaceArc']) || nextNode.isTypeOf(META['OutplaceArc']);
+                    if( isArc && nextNode.getPointerId('src') === elementId) {
+                        elem.next.push({
+                            name: nextNode.getAttribute('name'),
+                            node: nextNode.getPointerId('dst')
+                        });
+                        // elem.next[nextNode.getAttribute('name')] = nextNode.getPointerId('dst');
                     }
                 });
-                sm.states[elementId] = state;
+                if ( isPlace ) pn.places[elementId] = elem;
+                else pn.transitions[elementId] = elem;
             }
         });
-        sm.setFireableEvents = this.setFireableEvents;
+        pn.setFireableEvents = this.setFireableEvents;
 
-        self._widget.initPetriNet(sm);
+        self._widget.initPetriNet(pn);
     };
 
     PetriNetVisualizerControl.prototype.clearPetriNet = function () {
@@ -364,6 +380,14 @@ define([
         this._toolbarInitialized = true;
     };
 
+    PetriNetVisualizerControl.prototype._stateActiveObjectChanged = function (model, activeObjectId) {
+        if (this._currentNodeId === activeObjectId) {
+            // The same node selected as before - do not trigger
+        } else {
+            this.selectedObjectChanged(activeObjectId);
+        }
+    };
+
     return PetriNetVisualizerControl;
 }
 //     PetriNetVisualizerControl.prototype._onLoad = function (gmeId) {
@@ -380,13 +404,6 @@ define([
 //         this._widget.removeNode(gmeId);
 //     };
 
-//     PetriNetVisualizerControl.prototype._stateActiveObjectChanged = function (model, activeObjectId) {
-//         if (this._currentNodeId === activeObjectId) {
-//             // The same node selected as before - do not trigger
-//         } else {
-//             this.selectedObjectChanged(activeObjectId);
-//         }
-//     };
 
 //     /* * * * * * * * Visualizer life cycle callbacks * * * * * * * */
 //     PetriNetVisualizerControl.prototype.destroy = function () {

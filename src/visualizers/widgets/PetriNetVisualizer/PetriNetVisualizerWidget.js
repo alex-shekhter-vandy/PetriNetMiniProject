@@ -42,10 +42,10 @@ define(['jointjs','css!./styles/PetriNetVisualizerWidget.css'], function (joint)
         // add event calls to elements
         this._jointPaper.on('element:pointerdblclick', function(elementView) {
             const currentElement = elementView.model;
-            // console.log(currentElement);
+            console.debug( "_initialize::currentElement: ", currentElement, JSON.stringify( currentElement ) );
             if (self._webgmePetriNet) {
-                // console.log(self._webgmePetriNet.id2state[currentElement.id]);
-                self._setCurrentState(self._webgmePetriNet.id2state[currentElement.id]);
+                console.debug(self._webgmePetriNet.id2place[currentElement.id]);
+                self._setCurrentPlace(self._webgmePetriNet.id2place[currentElement.id]);
             }
         });
 
@@ -65,6 +65,58 @@ define(['jointjs','css!./styles/PetriNetVisualizerWidget.css'], function (joint)
         this._logger.debug('Widget is resizing...');
     };
 
+    PetriNetVisualizerWidget.prototype.polarToCartesian = function (center_x, center_y, radius, angle_in_degrees) {
+        var return_value = {}
+        var angle_in_radians =  angle_in_degrees * Math.PI / 180.0;
+            return_value.x =    center_x + radius * Math.cos(angle_in_radians);
+            return_value.y =    center_y + radius * Math.sin(angle_in_radians);
+        return return_value;
+    }
+    
+    PetriNetVisualizerWidget.prototype.showPlaceTokens = function (placeVertex, placeMeta, diameter ) {
+        var self = this;
+
+        console.debug( "placeVertex: ", placeVertex );
+        console.debug( "placeMeta: ", placeMeta );
+        console.debug( "Leaving place tokens" );
+        
+        // The center is the same for all circles
+        const vpos = placeVertex.attributes.position;
+        const vr = diameter/2;
+        var cx = vpos.x + vr;
+        var cy = vpos.y + vr;
+
+        var radius_of_satellites_from_center = 30;
+        var radius_of_small_circles = 4
+        var number_of_satellite_circles = placeMeta.tokens;
+
+        //  The angle increments for each circle drawn
+        for(var n=0; n<number_of_satellite_circles; n++){
+
+            //  Find how many degrees separate each circle
+            var degrees_of_separation = 360/number_of_satellite_circles;
+
+            var angle_as_degrees = degrees_of_separation * n;
+
+            var coordinates = self.polarToCartesian(cx, cy, radius_of_satellites_from_center, angle_as_degrees);
+
+            let vertex = new joint.shapes.standard.Circle({
+                    position: {
+                        x: coordinates.x - radius_of_small_circles,
+                        y: coordinates.y -radius_of_small_circles
+                    },
+                    size: { width: radius_of_small_circles * 2, height: radius_of_small_circles * 2 },
+                    attrs: {
+                        body: {
+                            fill: 'blue',
+                            cursor: 'pointer'
+                        },
+                    }
+            });
+            vertex.addTo( placeVertex.graph );
+        }    
+    }
+
     // PetriNet manipulating functions called from the controller
     PetriNetVisualizerWidget.prototype.initPetriNet = function (petriNetDescriptor) {
         const self = this;
@@ -74,65 +126,63 @@ define(['jointjs','css!./styles/PetriNetVisualizerWidget.css'], function (joint)
         self._webgmePetriNet.current = self._webgmePetriNet.init;
         self._jointPetriNet.clear();
         const pn = self._webgmePetriNet;
-        pn.id2state = {}; // this dictionary will connect the on-screen id to the state id first add the states
-        Object.keys(pn.states).forEach(stateId => {
-            let vertex = null;
-            if (pn.init === stateId) {
-                vertex = new joint.shapes.standard.Circle({
-                    position: pn.states[stateId].position,
-                    size: { width: 20, height: 20 },
+        pn.id2place = {}; // this dictionary will connect the on-screen id to the state id first add the places
+        pn.id2transition = {};
+        pn.placesAndTransitions = {};
+        Object.keys(pn.places).forEach(elemId => {
+            let vertex = new joint.shapes.standard.Circle({
+                    position: pn.places[elemId].position,
+                    size: { width: 80, height: 80 },
                     attrs: {
                         body: {
-                            fill: '#333333',
+                            fill: 'white',
                             cursor: 'pointer'
-                        }
-                    }
-                });
-            } else if (pn.states[stateId].isEnd) {
-                vertex = new joint.shapes.standard.Circle({
-                    position: pn.states[stateId].position,
-                    size: { width: 30, height: 30 },
-                    attrs: {
-                        body: {
-                            fill: '#999999',
-                            cursor: 'pointer'
-                        }
-                    }
-                });
-            } else {
-                vertex = new joint.shapes.standard.Circle({
-                    position: pn.states[stateId].position,
-                    size: { width: 60, height: 60 },
-                    attrs: {
-                        label : {
-                            text: pn.states[stateId].name,
-                            //event: 'element:label:pointerdown',
-                            fontWeight: 'bold',
-                            //cursor: 'text',
-                            //style: {
-                            //    userSelect: 'text'
-                            //}
                         },
-                        body: {
-                            strokeWidth: 3,
-                            cursor: 'pointer'
+                        label: {
+                            text: pn.places[elemId].name,
+                            fill: 'black'
                         }
                     }
                 });
-            }
             vertex.addTo(self._jointPetriNet);
-            pn.states[stateId].joint = vertex;
-            pn.id2state[vertex.id] = stateId;
+            self.showPlaceTokens( vertex, pn.places[ elemId ], 80 );
+            pn.places[elemId].joint = vertex;
+            pn.id2place[vertex.id] = elemId;
+        });
+
+        // Transitions
+        Object.keys(pn.transitions).forEach(elemId => {
+            let vertex = new joint.shapes.standard.Rectangle({
+                position: pn.transitions[elemId].position,
+                size: { width: 40, height: 80 },
+                attrs: {
+                    body: {
+                        fill: "white",
+                        cursor: "pointer"
+                    },
+                    label: {
+                        text: pn.transitions[elemId].name,
+                        fill: 'black'
+                    }
+                }
+            });
+            vertex.addTo(self._jointPetriNet);
+            pn.transitions[elemId].joint = vertex;
+            pn.id2transition[vertex.id] = elemId;
         });
 
         // then create the links
-        Object.keys(pn.states).forEach(stateId => {
-            const state = pn.states[stateId];
-            Object.keys(state.next).forEach(event => {
-                state.jointNext = state.jointNext || {};
+        pn.placesAndTransitions = {
+            ...pn.places,
+            ...pn.transitions
+        };
+        Object.keys(pn.placesAndTransitions).forEach(elemId => {
+            const elem = pn.placesAndTransitions[elemId];
+            elem.next.forEach(arc => {
+                elem.jointNext = elem.jointNext || {};
                 const link = new joint.shapes.standard.Link({
-                    source: {id: state.joint.id},
-                    target: {id: pn.states[state.next[event]].joint.id},
+                    source: { id: elem.joint.id },
+                    target: { id: pn.placesAndTransitions[arc.node].joint.id },
                     attrs: {
                         line: {
                             strokeWidth: 2
@@ -152,15 +202,15 @@ define(['jointjs','css!./styles/PetriNetVisualizerWidget.css'], function (joint)
                         },
                         attrs: {
                             text: {
-                                text: event,
+                                text: arc.name,
                                 fontWeight: 'bold'
                             }
                         }
                     }]
                 });
                 link.addTo(self._jointPetriNet);
-                state.jointNext[event] = link;
-            })
+                elem.jointNext[arc] = link;
+            });
         });
 
         //now refresh the visualization
@@ -174,7 +224,7 @@ define(['jointjs','css!./styles/PetriNetVisualizerWidget.css'], function (joint)
 
     PetriNetVisualizerWidget.prototype.fireEvent = function (event) {
         const self = this;
-        const current = self._webgmePetriNet.states[self._webgmePetriNet.current];
+        const current = self._webgmePetriNet.places[self._webgmePetriNet.current];
         const link = current.jointNext[event];
         const linkView = link.findView(self._jointPaper);
         linkView.sendToken(joint.V('circle', { r: 10, fill: 'black' }), {duration:500}, function() {
@@ -190,14 +240,17 @@ define(['jointjs','css!./styles/PetriNetVisualizerWidget.css'], function (joint)
 
     PetriNetVisualizerWidget.prototype._decoratePetriNet = function() {
         const pn = this._webgmePetriNet;
-        Object.keys(pn.states).forEach(stateId => {
-            pn.states[stateId].joint.attr('body/stroke', '#333333');
+        Object.keys(pn.places).forEach(stateId => {
+            pn.places[stateId].joint.attr('body/stroke', '#333333');
         });
-        pn.states[pn.current].joint.attr('body/stroke', 'blue');
-        pn.setFireableEvents(Object.keys(pn.states[pn.current].next));
+        console.debug( "_decoratePetriNet::pn", JSON.stringify(pn), pn );
+        if ( pn.current ) {
+            pn.places[pn.current].joint.attr('body/stroke', 'blue');
+            pn.setFireableEvents(Object.keys(pn.states[pn.current].next));
+        }
     };
 
-    PetriNetVisualizerWidget.prototype._setCurrentState = function(newCurrent) {
+    PetriNetVisualizerWidget.prototype._setCurrentPlace = function(newCurrent) {
         this._webgmePetriNet.current = newCurrent;
         this._decoratePetriNet();
     };
