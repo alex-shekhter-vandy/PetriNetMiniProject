@@ -1,0 +1,30 @@
+<svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+    <g>
+        <circle class="fill-color border-color" cx="40" cy="40" r="39" stroke="#000" fill="#FFFFFF"/>
+
+        <% 
+           var cx = 40, cy = 40; 
+           var radius_of_satellites_from_center = 30;
+           var radius_of_small_circles = 5;
+           var number_of_satellite_circles = getAttribute("tokens");   
+         
+           for(let n = 0; n < number_of_satellite_circles; n++ ){
+			 var degrees_of_separation = 360/number_of_satellite_circles;
+             var angle_as_degrees = degrees_of_separation * n;
+             var angle_in_radians = angle_as_degrees * Math.PI / 180.0;
+             var coordinates = {
+                x: cx + radius_of_satellites_from_center * Math.cos( angle_in_radians ),
+                y: cy + radius_of_satellites_from_center * Math.sin( angle_in_radians )
+             };
+        %>   
+        <circle 
+                cx="<%=coordinates.x%>" 
+                cy="<%=coordinates.y%>" 
+                r="<%=radius_of_small_circles%>" 
+                fill="blue" 
+        />   
+        <%
+           } 
+        %>
+    </g>
+</svg>

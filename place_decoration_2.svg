@@ -1,0 +1,23 @@
+<svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+    <g>
+        <% 
+            var tokensNum = 8, pi = Math.PI, placeR = 40, tokenR = 5, tokensCircleR = 30;
+
+
+            for(var angle = 0; angle < 2 * pi; angle += 2 * pi / tokensNum ) {
+               var coordinates = {
+                  x: placeR - tokenR + tokensCircleR * Math.cos( angle ),
+                  y: placeR - tokenR + tokensCircleR * Math.sin( angle )
+               };
+        %>   
+        <circle 
+                cx="<%=coordinates.x%>" 
+                cy="<%=coordinates.y%>" 
+                r="<%=tokenR%>" 
+                fill="blue" 
+        />   
+        <%
+        }
+        %>      
+    </g>
+</svg>
