@@ -13,10 +13,17 @@
         "secondary": false,
         "widget": "src/visualizers/widgets/PetriNetVisualizer"
       }
+    },
+    "plugins": {
+      "PetriNetPlugin": {
+        "src": "src/plugins/PetriNetPlugin",
+        "test": "test/plugins/PetriNetPlugin"
+      }
     }
   },
   "dependencies": {
     "seeds": {},
-    "visualizers": {}
+    "visualizers": {},
+    "plugins": {}
   }
 }
