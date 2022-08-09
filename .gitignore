@@ -39,4 +39,3 @@ package-lock.json
 # any python compiles
 *.pyc
 .DS_Store
-db
