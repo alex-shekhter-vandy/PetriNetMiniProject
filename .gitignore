@@ -39,13 +39,4 @@ package-lock.json
 # any python compiles
 *.pyc
 .DS_Store
-db/collection-0-6174365211966980818.wt
-db/index-1-6174365211966980818.wt
-db/mongod.lock
-db/sizeStorer.wt
-db/WiredTiger.turtle
-db/WiredTiger.wt
-db/diagnostic.data/metrics.2022-08-09T02-00-52Z-00000
-db/diagnostic.data/metrics.interim
-db/journal/WiredTigerLog.0000000003
-db/journal/WiredTigerLog.0000000004
+db
