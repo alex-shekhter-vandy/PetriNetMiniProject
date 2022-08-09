@@ -15,13 +15,15 @@
     "webgme": "node ./node_modules/webgme-cli/bin/webgme"
   },
   "version": "1.0.0",
+  "peerDependencies": {
+    "webgme": "^2.23.0"
+  },
   "devDependencies": {
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "webgme": "^2.23.0"
   },
   "dependencies": {
-    "jointjs": "^3.5.5",
-    "webgme": "latest",
-    "webgme-bindings": "latest",
-    "webgme-cli": "latest"
+    "jointjs": "^3.3.1",
+    "webgme-bindings": "latest"
   }
 }

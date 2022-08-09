@@ -19,7 +19,7 @@ WORKDIR /usr/app
 ADD . /usr/app
 
 RUN npm install  --unsafe-perm
-RUN npm install --save jointjs
+# RUN npm install --save jointjs
 
 CMD ["npm", "start"]
 

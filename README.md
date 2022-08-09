@@ -50,3 +50,12 @@ Follow these steps to add a new seed based on an existing project in your server
 - exit container
 - copy webgme-setup.json `docker-compose cp webgme:/usr/app/webgme-setup.json webgme-setup.json`
 - copy webgme-config `docker-compose cp webgme:/usr/app/config/config.webgme.js config/config.webgme.js`
+
+
+# Implementation Notes:
+
+## How to model
+https://www.youtube.com/watch?v=YKi_256Vy_0
+
+## Tokens inside places code:
+https://stackoverflow.com/questions/28992878/svg-a-circle-of-circles
